@@ -1,0 +1,82 @@
+services:
+  # Сервис Nginx (веб-сервер и обратный прокси)
+  nginx:
+    container_name: file-manager-nginx
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend:/var/www/backend
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./frontend/dist:/var/www/frontend
+    networks:
+      - file-manager-network
+    depends_on:
+      - backend
+      - frontend
+
+  # Сервис Backend (Laravel API)
+  backend:
+    container_name: file-manager-api
+    build:
+      context: ./backend # Контекст сборки - папка backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www/backend
+    volumes:
+      - ./backend:/var/www/backend # Монтируем только папку backend
+    networks:
+      - file-manager-network
+    depends_on:
+      - db
+
+  # Сервис Frontend (Vue.js)
+  frontend:
+    container_name: file-manager-frontend
+    build:
+      context: ./frontend # Контекст сборки - папка frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "5173:5173"
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - file-manager-network
+
+  # Сервис базы данных (MySQL)
+  db:
+    container_name: file-manager-db
+    image: mysql:8.0
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci', '--default-authentication-plugin=mysql_native_password']
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_USER: 'appuser'
+      MYSQL_PASSWORD: 'appuser'
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - file-manager-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+
+# Сеть для взаимодействия контейнеров
+networks:
+  file-manager-network:
+    driver: bridge
+
+# Том для персистентного хранения данных БД
+volumes:
+  dbdata:
+    driver: local
