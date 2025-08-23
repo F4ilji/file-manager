@@ -1,4 +1,13 @@
-@import 'base.css';
+@import "./base.css";
+
+@import 'tailwindcss';
+
+@import 'preline/variants.css';
+@source "../../node_modules/preline/dist/*.js";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@custom-variant dark (&:where(.darks, .darks *));
+
 
 #app {
   max-width: 1280px;
@@ -21,15 +30,16 @@ a,
   }
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+button:focus,
+[type='button']:focus,
+[type='reset']:focus,
+[type='submit']:focus,
+a:focus,
+textarea:focus,
+input:focus,
+div:focus,
+select:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  --tw-ring-shadow: 0 0 #0000; /* Убирает "кольцо" фокуса */
 }
